@@ -16,16 +16,16 @@ import {
 } from './constants';
 import pickers from './picker';
 import invariant from 'invariant';
-import {useEffect} from 'react';
+import { useEffect } from 'react';
 
-import type {AndroidEvent, AndroidNativeProps} from './types';
+import type { AndroidEvent, AndroidNativeProps } from './types';
 
 function validateProps(props: AndroidNativeProps) {
-  const {mode, value, display} = props;
+  const { mode, value, display } = props;
   invariant(value, 'A date or time should be specified as `value`.');
   invariant(
     !(display === ANDROID_DISPLAY.calendar && mode === ANDROID_MODE.time) &&
-      !(display === ANDROID_DISPLAY.clock && mode === ANDROID_MODE.date),
+    !(display === ANDROID_DISPLAY.clock && mode === ANDROID_MODE.date),
     `display: ${display} and mode: ${mode} cannot be used together.`,
   );
 }
@@ -40,6 +40,9 @@ function getPicker({
   neutralButtonLabel,
   minuteInterval,
   timeZoneOffsetInMinutes,
+  locale,
+  positiveButtonLabel,
+  negativeButtonLabel,
 }) {
   switch (mode) {
     case MODE_TIME:
@@ -50,6 +53,9 @@ function getPicker({
         is24Hour,
         neutralButtonLabel,
         timeZoneOffsetInMinutes,
+        locale,
+        positiveButtonLabel,
+        negativeButtonLabel,
       });
     case MODE_DATE:
     default:
@@ -60,6 +66,9 @@ function getPicker({
         maximumDate,
         neutralButtonLabel,
         timeZoneOffsetInMinutes,
+        locale,
+        positiveButtonLabel,
+        negativeButtonLabel,
       });
   }
 }
@@ -87,6 +96,9 @@ export default function RNDateTimePicker(props: AndroidNativeProps) {
     neutralButtonLabel,
     minuteInterval,
     timeZoneOffsetInMinutes,
+    locale,
+    positiveButtonLabel,
+    negativeButtonLabel,
   } = props;
   const valueTimestamp = value.getTime();
 
@@ -98,6 +110,10 @@ export default function RNDateTimePicker(props: AndroidNativeProps) {
 
   useEffect(
     function showOrUpdatePicker() {
+      console.log("locale,positiveButtonLabel,negativeButtonLabel,",
+        locale,
+        positiveButtonLabel,
+        negativeButtonLabel)
       const picker = getPicker({
         mode,
         value: valueTimestamp,
@@ -108,10 +124,13 @@ export default function RNDateTimePicker(props: AndroidNativeProps) {
         neutralButtonLabel,
         minuteInterval,
         timeZoneOffsetInMinutes,
+        locale,
+        positiveButtonLabel,
+        negativeButtonLabel,
       });
 
       picker.then(
-        function resolve({action, day, month, year, minute, hour}) {
+        function resolve({ action, day, month, year, minute, hour }) {
           let date = new Date(valueTimestamp);
           const event: AndroidEvent = {
             type: 'set',
