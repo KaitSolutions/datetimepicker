@@ -25,6 +25,7 @@ import android.widget.DatePicker;
 
 import java.util.Calendar;
 import java.util.Locale;
+import android.util.Log;
 
 @SuppressLint("ValidFragment")
 public class RNDatePickerDialogFragment extends DialogFragment {
@@ -63,10 +64,13 @@ public class RNDatePickerDialogFragment extends DialogFragment {
     RNDatePickerDisplay display = RNDatePickerDisplay.DEFAULT;
 
     if (args != null && args.getString(RNConstants.ARG_DISPLAY, null) != null) {
-      display = RNDatePickerDisplay.valueOf(args.getString(RNConstants.ARG_DISPLAY).toUpperCase(Locale.US));
+      display = RNDatePickerDisplay.valueOf(args.getString(RNConstants.ARG_DISPLAY).toUpperCase(new Locale(args.getString(RNConstants.ARG_LOCALE))));
     }
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      if (args != null && args.containsKey(RNConstants.ARG_LOCALE)) {
+        Locale.setDefault(new Locale(args.getString(RNConstants.ARG_LOCALE)));
+      }
       switch (display) {
         case CALENDAR:
         case SPINNER:
@@ -96,6 +100,9 @@ public class RNDatePickerDialogFragment extends DialogFragment {
           );
       }
     } else {
+      if (args != null && args.containsKey(RNConstants.ARG_LOCALE)) {
+        Locale.setDefault(new Locale(args.getString(RNConstants.ARG_LOCALE)));
+      }
       DatePickerDialog dialog = new RNDismissableDatePickerDialog(activityContext, onDateSetListener, year, month, day, display);
       switch (display) {
         case CALENDAR:
@@ -114,10 +121,28 @@ public class RNDatePickerDialogFragment extends DialogFragment {
           Bundle args,
           Context activityContext,
           @Nullable OnDateSetListener onDateSetListener) {
+    if (args != null && args.containsKey(RNConstants.ARG_LOCALE)) {
+      Locale.setDefault(new Locale(args.getString(RNConstants.ARG_LOCALE)));
+    }
+    
+    if (args != null && args.containsKey(RNConstants.ARG_LOCALE)) {
+      // for calendar's month and days of the week (NOTE: must be set before Calendar instance)
+      activityContext.getResources().getConfiguration().setLocale(new Locale(args.getString(RNConstants.ARG_LOCALE)));
+    }
 
     final Calendar c = Calendar.getInstance();
 
     DatePickerDialog dialog = getDialog(args, activityContext, onDateSetListener);
+
+    if (args != null) {
+      // for dialog buttons
+      if (args.containsKey(RNConstants.ARG_POSITIVE_BUTTON_LABEL)) {
+        dialog.setButton(DatePickerDialog.BUTTON_POSITIVE, args.getString(RNConstants.ARG_POSITIVE_BUTTON_LABEL), dialog);
+      }
+      if (args.containsKey(RNConstants.ARG_NEGATIVE_BUTTON_LABEL)) {
+        dialog.setButton(DatePickerDialog.BUTTON_NEGATIVE, args.getString(RNConstants.ARG_NEGATIVE_BUTTON_LABEL), dialog);
+      }
+    }
 
     if (args != null && args.containsKey(RNConstants.ARG_NEUTRAL_BUTTON_LABEL)) {
       dialog.setButton(DialogInterface.BUTTON_NEUTRAL, args.getString(RNConstants.ARG_NEUTRAL_BUTTON_LABEL), mOnNeutralButtonActionListener);
@@ -171,5 +196,11 @@ public class RNDatePickerDialogFragment extends DialogFragment {
 
   /*package*/ void setOnNeutralButtonActionListener(@Nullable OnClickListener onNeutralButtonActionListener) {
     mOnNeutralButtonActionListener = onNeutralButtonActionListener;
+  }
+
+  static Locale getLocale(Bundle args) {
+    String locale = args.getString(RNConstants.ARG_LOCALE);
+    String[] separated = locale.split("-");
+    return new Locale(separated[0], separated[1]);
   }
 }
